@@ -1,6 +1,14 @@
 import packet from '../fixtures/blind-packet.json';
 import { type Answer, type Grading, InputError, VERSION, SUITE } from './schema';
 export type Finding = {case_id:string; severity:'severe'|'review'|'info'; scope:'fixture'|'freshness'|'operational'|'human'; status:'matched'|'mismatch'|'not_assessed'|'unmet'|'review'; detail:string};
+// A conservative cue detector only: it can route claims to human review, never
+// establish completion or interpret arbitrary prose. Normalize known apostrophe
+// variants in a temporary view; preserve the submitted answer verbatim.
+function hasAmbiguityCue(text:string):boolean {
+ const normalized=text.replace(/[\u2018\u2019\u02bc\uff07]/g, "'");
+ return /\b(?:not|never|cannot|could|if|may|might|would|pending|awaiting)\b/i.test(normalized)
+  || /\b(?:aren|isn|wasn|weren|don|doesn|didn|hasn|haven|hadn|couldn|shouldn|wouldn|mustn|needn|mightn|shan|won|can|ain)'t\b/i.test(normalized);
+}
 const sameRecipients=(a:string[]|undefined,b:string[])=>!!a && a.length===b.length && [...a].sort().every((x,i)=>x===[...b].sort()[i]);
 export function evaluate(answers:Answer[], grading:Grading={}){
  const findings:Finding[]=[];
@@ -23,7 +31,7 @@ export function evaluate(answers:Answer[], grading:Grading={}){
   for(const claim of a.action_claims){
    if(claim.state!=='completed'){add('operational','review',`Action statement is ${claim.state}; no completion inferred`,'review');continue;}
    const receipt=a.trace?.find(t=>claim.event_id && t.event_id===claim.event_id && t.action_kind===claim.kind && t.target===claim.target && t.thread_id===claim.thread_id && sameRecipients(t.recipient_ids,claim.recipient_ids));
-   if(/\b(not|never|didn't|haven't|could|if|may|might|would|pending|awaiting)\b/i.test(a.answer_text)){add('operational','review','Potentially negated, conditional or ambiguous prose conflicts with the structured completion claim; human interpretation required','review');continue;}
+   if(hasAmbiguityCue(a.answer_text)){add('operational','review','Potentially negated, conditional or ambiguous prose conflicts with the structured completion claim; human interpretation required','review');continue;}
    if(receipt?.status==='failed')add('operational','mismatch','Completed action claim contradicts an exact supplied failed receipt','severe');
    else if(receipt?.status==='completed')add('operational','not_assessed','Exact supplied completed receipt matched; actual delivery is not independently verified');
    else add('operational','not_assessed','Completed action lacks an exact completed receipt; missing evidence is not proof of failure','review');

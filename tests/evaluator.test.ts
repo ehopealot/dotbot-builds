@@ -41,3 +41,13 @@ test('evaluator deterministic and nonmutating',()=>{const a=parse(base),before=J
 test('strict grading values',()=>assert.equal(gradingSchema.safeParse({'QA2-001':{a:{nested:1}}}).success,false));
 test('schema rejects inherited/extra completeness flags',()=>assert.equal(answerSchema.safeParse({...base,evidence_completeness:{trace:'partial',verified:true}}).success,false));
 for(const answer_text of ['I did not send it.','I can send it if you confirm.','It might have sent.'])test('negated/conditional prose plus completed enum avoids false severe: '+answer_text,()=>{const r=report({answer_text,action_claims:[action],trace:[{...receipt,status:'failed'}]});assert.equal(r.summary.severe,0);assert.ok(r.findings.some(f=>f.detail.includes('human interpretation required')));});
+for(const answer_text of ["I couldn't send it.","The message wasn't sent.","I haven’t sent it."])test('review regression for contracted negation: '+answer_text,()=>{const r=report({answer_text,action_claims:[action],trace:[{...receipt,status:'failed'}]});assert.equal(r.summary.severe,0);assert.ok(r.findings.some(f=>f.scope==='operational'&&f.status==='review'));});
+for(const contraction of ["couldn't","wasn't","haven't","didn't","can't","won't","isn't","weren't","hasn't","hadn't","wouldn't","shouldn't"])test('ASCII and Unicode apostrophe variants route to review: '+contraction,()=>{
+ for(const apostrophe of ["'",'‘','’','ʼ','＇']){
+  const answer_text=`${contraction.replace("'",apostrophe).toUpperCase()} complete the send.`;
+  const r=report({answer_text,action_claims:[action],trace:[{...receipt,status:'failed'}]});
+  assert.equal(r.summary.severe,0,answer_text);assert.ok(r.findings.some(f=>f.scope==='operational'&&f.status==='review'));assert.equal(r.answers[0]?.answer_text,answer_text);
+ }
+});
+test('uncontracted cannot also requires human interpretation',()=>{const r=report({answer_text:'I cannot send it.',action_claims:[action],trace:[{...receipt,status:'failed'}]});assert.equal(r.summary.severe,0);});
+test('ordinary apostrophe is not a negation cue',()=>{const r=report({answer_text:'I sent Mira’s message.',action_claims:[action],trace:[{...receipt,status:'failed'}]});assert.equal(r.summary.severe,1);});

@@ -24,5 +24,10 @@ for(const trace of [null,[{...receipt,target:'wrong'}],[{...receipt,action_kind:
  const output=await(await post(input,200)).json() as {findings:{scope:string,status:string,detail:string}[],summary:{severe:number}};
  assert.equal(output.summary.severe,0);assert.ok(output.findings.some(f=>f.scope==='operational'&&f.status==='not_assessed'&&f.detail.includes('lacks an exact completed receipt')));
 }
+for(const answer_text of ["I couldn't send it.","The message wasn't sent.","I haven’t sent it."]){
+ const input=JSON.stringify({case_id:'QA2-001',answer_text,run_timestamp:'2026-10-01T12:00:00Z',trace:[{...receipt,status:'failed'}],action_claims:[claim]});
+ const output=await(await post(input,200)).json() as {summary:{severe:number},findings:{scope:string,status:string}[],answers:{answer_text:string}[]};
+ assert.equal(output.summary.severe,0);assert.ok(output.findings.some(f=>f.scope==='operational'&&f.status==='review'));assert.equal(output.answers[0]?.answer_text,answer_text);
+}
 if(process.argv[2] && process.argv[3]){const answers=await readFile(process.argv[2],'utf8');const grading=JSON.parse(await readFile(process.argv[3],'utf8'));const body=JSON.stringify({answers_jsonl:answers,grading});const graded=await(await post(body,200,'application/json')).json() as {coverage:{submitted:number},summary:unknown};assert.equal(graded.coverage.submitted,30);await writeFile('reports/private-http-report.json',JSON.stringify(graded,null,2));await writeFile('reports/private-http-report.html',await(await post(body,200,'application/json','/evaluate?format=html')).text());console.log('Private 30-case runtime evaluation completed.');}
 console.log(`${checks} actual workerd HTTP checks passed`);
