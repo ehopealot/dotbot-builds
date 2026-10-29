@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^QA2-\\d{3}$"
+    },
+    "answer_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16000
+    },
+    "run_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "trace": {
+      "anyOf": [
+        {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool_name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "argument_shape": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "result_excerpt": {
+                "type": "string",
+                "maxLength": 4000
+              },
+              "event_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "failed",
+                  "pending",
+                  "unknown"
+                ]
+              },
+              "action_kind": {
+                "type": "string",
+                "enum": [
+                  "send_email",
+                  "retrieve",
+                  "schedule",
+                  "other"
+                ]
+              },
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "recipient_ids": {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                }
+              },
+              "thread_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "time": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "tool_name",
+              "argument_shape",
+              "result_excerpt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "model": {
+      "default": "unknown",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "version": {
+      "default": "unknown",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "suite_version": {
+      "default": "0.2.0",
+      "type": "string",
+      "const": "0.2.0"
+    },
+    "seed": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      ]
+    },
+    "response_provenance": {
+      "default": "unknown",
+      "type": "string",
+      "enum": [
+        "unknown",
+        "imported",
+        "demo-authored"
+      ]
+    },
+    "sources": {
+      "default": [],
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000,
+            "format": "uri"
+          },
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "fixture-provided",
+              "retrieved"
+            ]
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "url",
+          "provenance"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "fixture_claims": {
+      "default": [],
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "action_claims": {
+      "default": [],
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "send_email",
+              "schedule",
+              "other"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "not_completed",
+              "conditional",
+              "ambiguous"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "recipient_ids": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          },
+          "thread_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "kind",
+          "state",
+          "target",
+          "recipient_ids",
+          "thread_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "evidence_completeness": {
+      "type": "object",
+      "properties": {
+        "trace": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "trace"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "case_id",
+    "answer_text",
+    "run_timestamp",
+    "trace"
+  ],
+  "additionalProperties": false
+}

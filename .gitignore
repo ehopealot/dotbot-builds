@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.env*
+.dev.vars*
+reports/
+*.log
+private/
+*grading*.json
+*authored-answers*.jsonl
