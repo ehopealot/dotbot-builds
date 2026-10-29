@@ -1,6 +1,6 @@
 # Nellie QA Bench 0.2.1
 
-Production Pages deployment: https://nellie-qa-bench.pages.dev. Cloudflare confirms deployment success for source commit `bad55724565092b7838c398b4865ea8146a9db3f`. Public browser verification is pending: the validation command-line client received Cloudflare HTTP 403 / error 1010 before reaching the app. This is not a claim of verified public functionality.
+Production Pages destination: https://nellie-qa-bench.pages.dev. Deployment success, client-specific HTTPS observations and outstanding public interaction checks are recorded separately in `VALIDATION.md`. The deployed app exposes its exact source commit at `/health`; observations from earlier commits are not proof of a later deployment's functionality.
 
 A stateless Cloudflare Workers test bench for inspecting **synthetic** assistant answers. This is a new implementation and new QA2 suite, not a recovery or continuation of an earlier harness. No previous test results apply.
 
@@ -37,7 +37,7 @@ Browser QA uses Chromium's sandbox; it does not disable browser security. `repor
 3. Paste/upload JSONL into the bench. Optionally paste private grading JSON into its separate input. Click **Evaluate evidence** and review severe findings first, then download HTML or JSON.
 4. A human reviews prose and fills their own qualitative rubric. Ratings remain null in generated reports. There is no overall quality score.
 
-The shipped demo is an intentionally unassessed, demo-authored input, not a model response or benchmark result. The public repository contains no QA2 grading answer keys. Runtime evaluation accepts external private grading. Public unit tests use independent developer assertions unrelated to QA2 answer keys.
+The blind packet has 30 cases. The shipped demo contains one intentionally unassessed, demo-authored row (QA2-001), not a model response or benchmark result. The public repository contains no QA2 grading answer keys. Runtime evaluation accepts external private grading. Public unit tests use independent developer assertions unrelated to QA2 answer keys.
 
 ## Input contract
 
