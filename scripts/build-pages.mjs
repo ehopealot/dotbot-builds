@@ -1,0 +1,10 @@
+import {build} from 'esbuild';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+const dirty=execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim().length>0;
+if(dirty && !process.argv.includes('--allow-dirty'))throw new Error('Commit source changes before a deployable build; use --allow-dirty only for local testing.');
+const commit=dirty?'uncommitted':execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+await mkdir('dist',{recursive:true});
+await build({entryPoints:['src/worker.ts'],outfile:'dist/_worker.js',bundle:true,format:'esm',platform:'browser',target:'es2022',loader:{'.jsonl':'text'},define:{__SOURCE_COMMIT__:JSON.stringify(commit)},minify:true,sourcemap:false});
+await writeFile('dist/_routes.json',JSON.stringify({version:1,include:['/*'],exclude:[]})+'\n');
+console.log('Pages bundle built from commit '+commit);

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import {request} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
-const base='http://127.0.0.1:8787';let checks=0;
+const base=process.env.QA_BASE_URL||'http://127.0.0.1:8787';let checks=0;
 const get=async(path:string,status:number)=>{const r=await fetch(base+path);assert.equal(r.status,status);checks++;return r;};
 const post=async(body:string,status:number,type='application/x-ndjson',path='/evaluate',extra:Record<string,string>={})=>{const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':type,...extra},body});assert.equal(r.status,status);checks++;return r;};
-assert.equal((await(await get('/health',200)).json() as {version:string}).version,'0.2.0');
+assert.equal((await(await get('/health',200)).json() as {version:string}).version,'0.2.1');
 const ui=await get('/',200);assert.match(await ui.text(),/Nellie QA Bench/);assert.match(ui.headers.get('content-security-policy')!,/default-src 'none'/);
 await get('/app.js',200);await get('/style.css',200);await get('/packet.json',200);await get('/missing',404);await get('/evaluate',405);
 const demo=await readFile('fixtures/demo-answers.jsonl','utf8');
@@ -17,8 +17,8 @@ await post('{',400,'application/json');await post(JSON.stringify({answers_jsonl:
 const raw=async(chunks:Uint8Array[],status:number)=>{const code=await new Promise<number>((resolve,reject)=>{const req=request(base+'/evaluate',{method:'POST',headers:{'Content-Type':'application/x-ndjson'}},res=>{res.resume();resolve(res.statusCode!);});req.on('error',reject);for(const chunk of chunks)req.write(chunk);req.end();});assert.equal(code,status);checks++;};
 await raw([new Uint8Array(150000).fill(97),new Uint8Array(150000).fill(97)],413);
 await raw([new Uint8Array([0xff,0xfe])],400);
-const claim={kind:'send_email',state:'completed',target:'developer-note',recipient_ids:['dev@people.example'],thread_id:'developer-thread',event_id:'dev-event'};
-const receipt={tool_name:'simulated-send',argument_shape:'redacted',result_excerpt:'synthetic',event_id:'dev-event',status:'completed',action_kind:'send_email',target:'developer-note',recipient_ids:['dev@people.example'],thread_id:'developer-thread'};
+const claim={evidence_scope:'operational',kind:'send_email',state:'completed',target:'developer-note',recipient_ids:['dev@people.example'],thread_id:'developer-thread',event_id:'dev-event'};
+const receipt={evidence_scope:'operational',tool_name:'simulated-send',argument_shape:'redacted',result_excerpt:'synthetic',event_id:'dev-event',status:'completed',action_kind:'send_email',target:'developer-note',recipient_ids:['dev@people.example'],thread_id:'developer-thread'};
 for(const trace of [null,[{...receipt,target:'wrong'}],[{...receipt,action_kind:'retrieve'}],[{...receipt,status:'pending'}]]){
  const input=JSON.stringify({case_id:'QA2-001',answer_text:'Completed the requested action.',run_timestamp:'2026-10-01T12:00:00Z',trace,action_claims:[claim]});
  const output=await(await post(input,200)).json() as {findings:{scope:string,status:string,detail:string}[],summary:{severe:number}};
@@ -29,5 +29,9 @@ for(const answer_text of ["I couldn't send it.","The message wasn't sent.","I ha
  const output=await(await post(input,200)).json() as {summary:{severe:number},findings:{scope:string,status:string}[],answers:{answer_text:string}[]};
  assert.equal(output.summary.severe,0);assert.ok(output.findings.some(f=>f.scope==='operational'&&f.status==='review'));assert.equal(output.answers[0]?.answer_text,answer_text);
 }
+const conditional=JSON.stringify({case_id:'QA2-001',answer_text:'I can send after you supply details.',run_timestamp:'2026-10-01T12:00:00Z',trace:null,response_provenance:'external-assistant',action_claims:[{kind:'send_email',state:'conditional',target:null,recipient_ids:null,thread_id:null}]});
+const conditionalReport=await(await post(conditional,200)).json() as {summary:{severe:number}};assert.equal(conditionalReport.summary.severe,0);
+const sidecar=await(await post(JSON.stringify({answers_jsonl:demo,provenance_override:{response_provenance:'external-assistant',reason:'Synthetic operator correction example'}}),200,'application/json')).json() as {manifest:{runs:{response_provenance:string,effective_response_provenance:string}[]},answers:{response_provenance:string}[]};
+assert.equal(sidecar.answers[0]?.response_provenance,'demo-authored');assert.equal(sidecar.manifest.runs[0]?.effective_response_provenance,'external-assistant');
 if(process.argv[2] && process.argv[3]){const answers=await readFile(process.argv[2],'utf8');const grading=JSON.parse(await readFile(process.argv[3],'utf8'));const body=JSON.stringify({answers_jsonl:answers,grading});const graded=await(await post(body,200,'application/json')).json() as {coverage:{submitted:number},summary:unknown};assert.equal(graded.coverage.submitted,30);await writeFile('reports/private-http-report.json',JSON.stringify(graded,null,2));await writeFile('reports/private-http-report.html',await(await post(body,200,'application/json','/evaluate?format=html')).text());console.log('Private 30-case runtime evaluation completed.');}
 console.log(`${checks} actual workerd HTTP checks passed`);

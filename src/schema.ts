@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export const VERSION = '0.2.0';
+export const VERSION = '0.2.1';
 export const SUITE = '0.2.0';
 export const MAX_BYTES = 262144;
 export const MAX_ROWS = 30;
@@ -8,19 +8,26 @@ const time = z.iso.datetime({ offset: true });
 const recipients = z.array(short).max(20).refine(v => new Set(v).size === v.length, 'Duplicate recipients');
 export const traceSchema = z.strictObject({
   tool_name: short, argument_shape: z.string().max(2000), result_excerpt: z.string().max(4000),
+  evidence_scope:z.enum(['fixture','operational','unknown']).default('unknown'),
   event_id: short.optional(), status: z.enum(['completed','failed','pending','unknown']).optional(),
   action_kind: z.enum(['send_email','retrieve','schedule','other']).optional(), target: short.optional(),
   recipient_ids: recipients.optional(), thread_id: short.optional(), time: time.optional(),
+});
+export const provenanceSchema=z.enum(['unknown','imported','demo-authored','external-assistant']);
+export const provenanceOverrideSchema=z.strictObject({response_provenance:provenanceSchema,reason:short});
+export type ProvenanceOverride=z.infer<typeof provenanceOverrideSchema>;
+const actionClaimSchema=z.strictObject({evidence_scope:z.enum(['fixture','operational','unknown']).default('unknown'),kind:z.enum(['send_email','schedule','other']),state:z.enum(['completed','not_completed','conditional','ambiguous']),target:short.nullable(),recipient_ids:recipients.nullable(),thread_id:short.nullable(),event_id:short.optional()}).superRefine((v,c)=>{
+ if(v.state!=='conditional' && (v.target===null || v.recipient_ids===null || v.thread_id===null))c.addIssue({code:'custom',message:'Only conditional offers may have unknown action identity'});
 });
 export const answerSchema = z.strictObject({
   case_id: z.string().regex(/^QA2-\d{3}$/), answer_text: z.string().min(1).max(16000),
   run_timestamp: time, trace: z.array(traceSchema).max(100).nullable(),
   model: short.default('unknown'), version: short.default('unknown'), run_id: short.optional(),
   suite_version: z.literal(SUITE).default(SUITE), seed: z.union([short,z.number().int().safe()]).optional(),
-  response_provenance: z.enum(['unknown','imported','demo-authored']).default('unknown'),
+  response_provenance: provenanceSchema.default('unknown'),
   sources: z.array(z.strictObject({url:z.url().max(2000).refine(s=>/^https?:/.test(s),'HTTP(S) URL required'), provenance:z.enum(['fixture-provided','retrieved']),event_id:short.optional(),retrieved_at:time.optional()})).max(50).default([]),
   fixture_claims: z.array(z.strictObject({key:short,value:z.union([z.string().max(2000),z.number().finite(),z.boolean(),z.null()])})).max(50).default([]),
-  action_claims: z.array(z.strictObject({kind:z.enum(['send_email','schedule','other']),state:z.enum(['completed','not_completed','conditional','ambiguous']),target:short,recipient_ids:recipients,thread_id:short,event_id:short.optional()})).max(20).default([]),
+  action_claims: z.array(actionClaimSchema).max(20).default([]),
   evidence_completeness: z.strictObject({trace:z.enum(['complete','partial','unknown'])}).optional(),
 }).superRefine((v,c)=>{
   if(v.evidence_completeness?.trace==='complete' && (!v.trace || v.trace.length===0)) c.addIssue({code:'custom',message:'Empty or null trace cannot be declared complete'});
@@ -47,4 +54,4 @@ export function parseAnswers(text:string):Answer[]{
 
 export const gradingSchema=z.record(z.string().regex(/^QA2-\d{3}$/),z.record(z.string().min(1).max(300),z.union([z.string().max(2000),z.number().finite(),z.boolean(),z.null()]))).refine(v=>Object.keys(v).length<=30 && Object.values(v).every(x=>Object.keys(x).length<=50),'Grading configuration too large');
 export type Grading=z.infer<typeof gradingSchema>;
-export const envelopeSchema=z.strictObject({answers_jsonl:z.string().max(MAX_BYTES),grading:gradingSchema.default({})});
+export const envelopeSchema=z.strictObject({answers_jsonl:z.string().max(MAX_BYTES),grading:gradingSchema.default({}),provenance_override:provenanceOverrideSchema.optional()});

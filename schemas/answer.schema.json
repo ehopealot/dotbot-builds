@@ -37,6 +37,15 @@
                 "type": "string",
                 "maxLength": 4000
               },
+              "evidence_scope": {
+                "default": "unknown",
+                "type": "string",
+                "enum": [
+                  "fixture",
+                  "operational",
+                  "unknown"
+                ]
+              },
               "event_id": {
                 "type": "string",
                 "minLength": 1,
@@ -140,7 +149,8 @@
       "enum": [
         "unknown",
         "imported",
-        "demo-authored"
+        "demo-authored",
+        "external-assistant"
       ]
     },
     "sources": {
@@ -224,6 +234,15 @@
       "items": {
         "type": "object",
         "properties": {
+          "evidence_scope": {
+            "default": "unknown",
+            "type": "string",
+            "enum": [
+              "fixture",
+              "operational",
+              "unknown"
+            ]
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -242,23 +261,44 @@
             ]
           },
           "target": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 300
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "recipient_ids": {
-            "maxItems": 20,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 300
-            }
+            "anyOf": [
+              {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "thread_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 300
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "event_id": {
             "type": "string",

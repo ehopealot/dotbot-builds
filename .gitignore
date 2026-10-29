@@ -7,3 +7,4 @@ reports/
 private/
 *grading*.json
 *authored-answers*.jsonl
+dist/
