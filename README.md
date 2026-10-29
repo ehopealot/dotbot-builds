@@ -1,5 +1,7 @@
 # Nellie QA Bench 0.2.1
 
+Production Pages deployment: https://nellie-qa-bench.pages.dev. Cloudflare confirms deployment success for source commit `bad55724565092b7838c398b4865ea8146a9db3f`. Public browser verification is pending: the validation command-line client received Cloudflare HTTP 403 / error 1010 before reaching the app. This is not a claim of verified public functionality.
+
 A stateless Cloudflare Workers test bench for inspecting **synthetic** assistant answers. This is a new implementation and new QA2 suite, not a recovery or continuation of an earlier harness. No previous test results apply.
 
 ## Run locally

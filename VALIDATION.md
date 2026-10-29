@@ -26,3 +26,9 @@ Added 12 focused tests for unknown identities in conditional offers, rejection o
 ## Explicit evidence scope
 
 Eight additional tests cover fixture-scoped negative/conditional/ambiguous claims, unknown scope, matching scoped failure evidence, cross-scope receipt mismatch and non-exhaustive negative evidence. Missing trace does not supply provenance. Reports expose scoped completed/not_established/not_completed_with_evidence outcomes without claiming independent verification.
+
+## Production deployment status
+
+The project owner authorized the public synthetic stateless app. Cloudflare Pages reports production deployment `bd434b68-eb74-4ea9-ab62-866fe5b0bc04` successful at https://nellie-qa-bench.pages.dev, from source commit `bad55724565092b7838c398b4865ea8146a9db3f`. The bundle contained only the compiled public Worker and routing manifest; a pre-upload audit excluded credentials, confidential grading, private reports and account identifiers. The account subscription list was empty; no paid subscription or plan upgrade was requested. Web Analytics is disabled.
+
+The same bundle passed 31 local Pages HTTP checks. Public HTTPS verification is blocked: a request to `/health` returned Cloudflare HTTP 403 with `error code: 1010`, before the application's JSON response. No browser fingerprint spoofing, security setting change or alternate-host bypass was attempted. Live UI, evaluation and invalid-input responses therefore remain unverified until a supported browser/client can access the site. The separate local Chromium sandbox limitation also remains. Deployment success and public functional verification are distinct.
